@@ -125,6 +125,24 @@ class TreeElement
   end
 end
 
+class AnswerManager
+  def initialize
+    @mode_menu_pair = []
+  end
+  def add(mode, selected_menu)
+    @mode_menu_pair << [mode, selected_menu]
+  end
+  def first_selected_menu
+    @mode_menu_pair[0][1]
+  end
+  def last_mode
+    @mode_menu_pair[@mode_menu_pair.length - 1][0]
+  end
+  def last_selected_menu
+    @mode_menu_pair[@mode_menu_pair.length - 1][1]
+  end
+end
+
 class ThinkCompassCore
   attr_reader :received_answers, :question, :result
   def initialize
@@ -132,6 +150,7 @@ class ThinkCompassCore
   end
   def init
     @received_answers = {}
+    @answers = AnswerManager.new
     @current_language = :ja_JP
     @current_question_id = :less_element
     @current_question_mode = :less
@@ -147,6 +166,7 @@ class ThinkCompassCore
         selected_index = convert_input_to_index(data)
         # 受け取った答え（シンボルもしくは文字列）をハッシュに入れておく
         @received_answers[@current_question_id] = @menu[selected_index]
+        @answers.add(@current_question_mode, @menu[selected_index])
       end
     end
 
