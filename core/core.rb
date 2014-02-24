@@ -96,35 +96,6 @@ class SelectAnswerQuestion < Question
   end
 end
 
-class TreeElement
-  attr_reader :name, :parent, :rank
-  def initialize(name, parent = nil)
-    @name = name
-    @parent = parent
-    @rank = calc_rank
-  end
-  def calc_rank
-    return 0 if @parent == nil
-    rank = 0
-    current_element = self
-    while current_element.parent != nil do
-      rank += 1
-      current_element = current_element.parent
-    end
-    rank
-  end
-  def root
-    current_element = self
-    while current_element.parent != nil do
-      current_element = current_element.parent
-    end
-    current_element
-  end
-  def to_s
-    @name
-  end
-end
-
 class AnswerManager
   def initialize
     @mode_menu_pair = []
@@ -141,6 +112,12 @@ class AnswerManager
   def last_selected_menu
     @mode_menu_pair[@mode_menu_pair.length - 1][1]
   end
+  def count
+    @mode_menu_pair.length
+  end
+  def select_with_mode(mode)
+    @mode_menu_pair.select{|pair| pair[0] == mode}.map{|pair| pair[1]}
+  end
 end
 
 class ThinkCompassCore
@@ -152,10 +129,7 @@ class ThinkCompassCore
     @received_answers = {}
     @answers = AnswerManager.new
     @current_language = :ja_JP
-    @current_question_id = :less_element
-    @current_question_mode = :less
-    @menu = MenuTree.get_menu_names_with_tree(:default, :ja_JP)
-    @question = SelectAnswerQuestion.new(description: "一番不足しているのはどれですか？", menu: @menu)
+    @question = go_next_question
     @on_result = false
     @result = nil
   end
@@ -164,33 +138,53 @@ class ThinkCompassCore
       selected_index = nil
       if (@question.is_a?(SelectAnswerQuestion))
         selected_index = convert_input_to_index(data)
-        # 受け取った答え（シンボルもしくは文字列）をハッシュに入れておく
-        @received_answers[@current_question_id] = @menu[selected_index]
-        @answers.add(@current_question_mode, @menu[selected_index])
+        @answers.add(@current_question_mode, MenuTree.get_menu_sym(@menu[selected_index], @current_language))
       end
-    end
-
-    # p @current_question_id
-
-    case @current_question_id
-    when :less_element
-      @menu.slice!(selected_index)
-      menu = @menu
-      set_next_question(:enough_element, menu, SelectAnswerQuestion.new(description: "一番余裕があるのはどれですか？", menu: menu))
-    when :enough_element, :enough_element_資源, :enough_element_気持ち, :enough_element_理解
-      go_result
-    when :less_element_資源, :less_element_気持ち, :less_element_理解
-      go_result
-    else
-      puts "no match question_id symbol"
-      @current_question_id = nil
-      @next_question = nil
     end
   end
   def go_next_question
-    @question = @next_question
-    go_result if (@question == nil)
+    if to_go_result?
+      @on_result = true
+      @result = build_result
+    end
+    case @current_question_mode
+    when nil, :more
+      @current_question_mode = :less
+      if @current_tree_root == nil
+        @current_tree_root = :default
+        @current_tree = MenuTree.get_menu_tree(@current_tree_root)
+      else
+        @current_tree_root = @answers.select_with_mode(:less)[-1]
+        @current_tree = MenuTree.get_menu_tree(@current_tree_root)
+      end
+
+      if @current_tree != nil
+        @menu = MenuTree.get_menu_names_with_tree(@current_tree_root, @current_language)
+        @question = SelectAnswerQuestion.new(description: "一番不足しているのはどれですか？", menu: @menu)
+      else
+        @question = nil
+      end
+    when :less
+      @current_question_mode = :more
+      if @answers.count == 1
+        selected_index = MenuTree.get_menu_tree(@current_tree_root).index(@answers.last_selected_menu)
+        @menu.slice!(selected_index)
+        @question = SelectAnswerQuestion.new(description: "一番余裕があるのはどれですか？", menu: @menu)
+      else
+        @current_tree_root = @answers.select_with_mode(:more)[-1]
+        @current_tree = MenuTree.get_menu_tree(@current_tree_root)
+        if @current_tree != nil
+          @menu = MenuTree.get_menu_names_with_tree(@current_tree_root, @current_language)
+          @question = SelectAnswerQuestion.new(description: "一番余裕があるのはどれですか？", menu: @menu)
+        else
+          @question = nil
+        end
+      end
+    end
     @question
+  end
+  def to_go_result?
+    @answers.count >= 2
   end
   def go_result
     @on_result = true
@@ -202,25 +196,12 @@ class ThinkCompassCore
   end
   def continue_question
     @on_result = false
-    if ((@received_answers.keys & [:less_element_資源, :less_element_気持ち, :less_element_理解]).length == 1)
-      set_second_enough_question()
-    else
-      latest_answer_sym = MenuTree.get_menu_sym(@received_answers[:less_element], @current_language)
-      menu = MenuTree.get_menu_names_with_tree(latest_answer_sym, :ja_JP)
-      case latest_answer_sym
-      when :resouce; next_id = :less_element_資源
-      when :motivation; next_id = :less_element_気持ち
-      when :recognization; next_id = :less_element_理解
-      end
-      set_next_question(next_id, menu, SelectAnswerQuestion.new(description: "一番不足しているのはどれですか？", menu: menu))
-    end
-    go_next_question
   end
 
   private 
 
-  def set_next_question(current_question_id, menu, next_question)
-    @current_question_id = current_question_id
+  def set_next_question(current_question_mode, menu, next_question)
+    @current_question_mode = current_question_mode
     @menu = menu
     @next_question = next_question
   end
@@ -262,5 +243,9 @@ class ThinkCompassCore
       throw ArgumentError.new("回答データが不正です。:#{data}") if selected_index < 0 || selected_index >= @menu.length
     end
     selected_index
+  end
+  def build_result
+    return nil if @answers.count < 2
+    return {less: @answers.select_with_mode(:less), more: @answers.select_with_mode(:more)}
   end
 end
