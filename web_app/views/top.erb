@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Think Compass</title>
+<!--[if IE]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+
+<![endif]-->
+<style>
+  article, aside, dialog, figure, footer, header,
+  hgroup, menu, nav, section { display: block; }
+</style>
+</head>
+<body>
+  <h1>Think Compass</h1>
+    <%=question_mode.to_s%>
+    <% case question_mode 
+       when :less, :enough %>
+      <%=present_answer%>
+      <%
+        case question_mode
+          when :less; question_str = "どれが一番不足していますか？"; action_target = "enough"
+          when :enough; question_str = "どれが一番足りていますか？"; action_target = "result"
+        end
+        radios = []
+        radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"recognization\">理解"
+        radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"resouce\">資源"
+        radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"motivation\">気持ち"
+        if (present_answer != nil)
+          radios.reject!{|r| r.include?(present_answer)}
+        end
+        radios[0][radios[0].index(">") - 1] += "checked=\"checked\""
+      %>
+      <h2><%=question_str%></h2>
+        <form action="<%=action_target%>" method="get">
+          <p>
+            <% radios.each do |r| %>
+              <%= r %>
+            <% end%>
+          </p>
+          <input type="submit" value="回答">
+        </form>
+    <% when :result %>
+      <%
+        action_target = "less"
+      %>
+      <h2>結果</h2>
+      　<p>
+          <%= built_result %>
+        <p>
+        <form action="<%=action_target%>" method="get">
+          <input type="submit" value="継続">
+        </form>
+    <% end %>
+</body>
+</html>
