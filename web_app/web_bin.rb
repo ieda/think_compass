@@ -53,15 +53,15 @@ def build_result
   if (more_base_name == more_name)
     result += "#{more_base_name}"
   else
-    result += "#{more_base_name} 特に #{more_name}"
+    result += "#{more_base_name}（#{more_name}）"
   end
-  result += " を使って、"
+  result += "を使って、"
   if (less_base_name == less_name)
     result += "#{less_base_name}"
   else
-    result += "#{less_base_name} 特に #{less_name}"
+    result += "#{less_base_name}（#{less_name}）"
   end
-  result += " を補ってみてはどうですか？\n"
+  result += "を補ってみてはどうですか？\n"
 
   # if (session[:core].received_answers.key?(:enough_element) && session[:core].received_answers.key?(:less_element))
   #   result += "#{session[:core].received_answers[:enough_element]} を使って #{session[:core].received_answers[:less_element]} を補ってみてはどうでしょうか？\n"
