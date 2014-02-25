@@ -65,6 +65,7 @@ class Question
 end
 
 class SelectAnswerQuestion < Question
+  attr_reader :menu
   def initialize(description: "選択肢を選んで回答する質問", menu: [])
     super(description: description)
     throw ArgumentError.new("選択肢のデータが不正です。") if menu.length == 0
@@ -121,7 +122,7 @@ class AnswerManager
 end
 
 class ThinkCompassCore
-  attr_reader :received_answers, :question, :result
+  attr_reader :answers, :question, :result
   def initialize
     init
   end
@@ -196,6 +197,7 @@ class ThinkCompassCore
   end
   def continue_question
     @on_result = false
+    @current_question_mode = @answers.last_mode == :more ? :less : :more
   end
 
   private 

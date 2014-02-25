@@ -6,36 +6,6 @@ core = ThinkCompassCore.new()
 
 def build_result(core)
   result = ""
-  # enough_element_1st_set = [:enough_element_資源, :enough_element_気持ち, :enough_element_理解]
-  # enough_element_1st = core.received_answers.keys & enough_element_1st_set
-  # if (enough_element_1st.length == 1)
-  #   less_element_1st_set = [:less_element_資源, :less_element_気持ち, :less_element_理解]
-  #   less_element_1st = (core.received_answers.keys & less_element_1st_set)
-  #   enough_element_1st = enough_element_1st[0] if enough_element_1st.length == 1
-  #   less_element_1st = less_element_1st[0] if less_element_1st.length == 1
-  #   if (core.received_answers.key?(enough_element_1st) && core.received_answers.key?(less_element_1st))
-  #     result += "#{core.received_answers[enough_element_1st]} を使って #{core.received_answers[less_element_1st]} を補ってみてはどうでしょうか？\n"
-  #     result += "もっと続けますか？ [y,a/n,s] > "
-  #   end
-
-  enough_element_1st_set = [:enough_element_資源, :enough_element_気持ち, :enough_element_理解]
-  enough_element_1st = (core.received_answers.keys & enough_element_1st_set)
-  enough_element_1st = enough_element_1st[0] if enough_element_1st != nil && enough_element_1st.length == 1
-  less_element_1st_set = [:less_element_資源, :less_element_気持ち, :less_element_理解]
-  less_element_1st = (core.received_answers.keys & less_element_1st_set)
-  less_element_1st = less_element_1st[0] if less_element_1st != nil && less_element_1st.length == 1
-  if (enough_element_1st.empty? == false)
-    result += "#{core.received_answers[:enough_element]} 特に #{core.received_answers[enough_element_1st]} を使って #{core.received_answers[less_element_1st]} を補ってみてはどうでしょうか？\n"
-    result += "もっと続けますか？ [y,a/n,s] > "
-  elsif (less_element_1st.empty? == false)
-    result += "#{core.received_answers[:enough_element]} を使って #{core.received_answers[less_element_1st]} を補ってみてはどうでしょうか？\n"
-    result += "もっと続けますか？ [y,a/n,s] > "
-  elsif (core.received_answers.key?(:enough_element) && core.received_answers.key?(:less_element))
-    result += "#{core.received_answers[:enough_element]} を使って #{core.received_answers[:less_element]} を補ってみてはどうでしょうか？\n"
-    result += "もっと続けますか？ [y,a/n,s] > "
-  end
-
-  result = ""
   more_base_name = MenuTree.get_menu_name(core.result[:more][0])
   less_base_name = MenuTree.get_menu_name(core.result[:less][0])
   more_name = MenuTree.get_menu_name(core.result[:more][-1])

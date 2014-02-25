@@ -14,21 +14,18 @@
 </head>
 <body>
   <h1>Think Compass</h1>
-    <%=question_mode.to_s%>
+    <!-- <%=question_mode.to_s%> -->
     <% case question_mode 
-       when :less, :enough %>
-      <%=present_answer%>
+       when :less, :more %>
+      <!-- <%=present_answer%> -->
       <%
         case question_mode
-          when :less; question_str = "どれが一番不足していますか？"; action_target = "enough"
-          when :enough; question_str = "どれが一番足りていますか？"; action_target = "result"
+          when :less; question_str = "どれが一番不足していますか？"; action_target = "more"
+          when :more; question_str = "どれが一番足りていますか？"; action_target = "result"
         end
         radios = []
-        radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"recognization\">理解"
-        radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"resouce\">資源"
-        radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"motivation\">気持ち"
-        if (present_answer != nil)
-          radios.reject!{|r| r.include?(present_answer)}
+        @menu_sym_name_pair.each do |sym, name|
+          radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"#{sym}\">#{name}"
         end
         radios[0][radios[0].index(">") - 1] += "checked=\"checked\""
       %>
@@ -49,9 +46,15 @@
       　<p>
           <%= built_result %>
         <p>
-        <form action="<%=action_target%>" method="get">
-          <input type="submit" value="継続">
-        </form>
+        <% if core.question != nil %>
+          <form action="<%=action_target%>" method="get">
+            <input type="submit" value="継続">
+          </form>
+        <% else %>
+          <form action="/" method="get">
+            <input type="submit" value="はじめから">
+          </form>
+        <% end %>
     <% end %>
 </body>
 </html>

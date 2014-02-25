@@ -11,14 +11,21 @@ configure do
   enable :sessions
 end
 
+def update_menu_sym_pair
+  @menu_sym_name_pair = session[:core].question.menu.map{|m| [MenuTree.get_menu_sym(m), m]}
+end
+
+def delete_selected_menu(receive_value)
+  @menu_sym_name_pair.delete_if{|sym, name| sym == receive_value.to_sym}
+end
+
 def receive_value_to_index(receive_value)
-  raw_index = session[:value_index_map].index(receive_value.to_sym)
-  session[:value_index_map].delete_at(raw_index)
-  (raw_index + 1).to_s.tap{|v| p v}
+  raw_index = @menu_sym_name_pair.index{|sym, name| sym == receive_value.to_sym}
+  (raw_index + 1).to_s
 end
 
 def receive_answer(ans)
-  p ans
+  return if ans == nil
   session[:core].receive_answer(receive_value_to_index(ans))
 end
 
@@ -26,21 +33,45 @@ def go_next
   session[:core].go_next_question
 end
 
+def continue_question
+  session[:core].continue_question
+end
+
 def on_result?
   session[:core].on_result?
 end
 
 def build_result
-  result = "りざると\n"
-  if (session[:core].received_answers.key?(:enough_element) && session[:core].received_answers.key?(:less_element))
-    result += "#{session[:core].received_answers[:enough_element]} を使って #{session[:core].received_answers[:less_element]} を補ってみてはどうでしょうか？\n"
+  result = ""
+  core = session[:core]
+  p core
+  result_more = core.result[:more]
+  more_base_name = MenuTree.get_menu_name(session[:core].result[:more][0])
+  less_base_name = MenuTree.get_menu_name(session[:core].result[:less][0])
+  more_name = MenuTree.get_menu_name(session[:core].result[:more][-1])
+  less_name = MenuTree.get_menu_name(session[:core].result[:less][-1])
+  if (more_base_name == more_name)
+    result += "#{more_base_name}"
+  else
+    result += "#{more_base_name} 特に #{more_name}"
   end
+  result += " を使って、"
+  if (less_base_name == less_name)
+    result += "#{less_base_name}"
+  else
+    result += "#{less_base_name} 特に #{less_name}"
+  end
+  result += " を補ってみてはどうでしょうか？\n"
+
+  # if (session[:core].received_answers.key?(:enough_element) && session[:core].received_answers.key?(:less_element))
+  #   result += "#{session[:core].received_answers[:enough_element]} を使って #{session[:core].received_answers[:less_element]} を補ってみてはどうでしょうか？\n"
+  # end
   result
 end
 
 def session_init
+  session.clear
   session[:core] = ThinkCompassCore.new()
-  session[:value_index_map] = [:recognization, :resouce, :motivation]
 end
 
 before do
@@ -48,28 +79,40 @@ end
 
 get '/' do
   session_init
-  erb :top, :locals => {question_mode: :less, present_answer: params[:enough]}
+  update_menu_sym_pair
+  erb :top, :locals => {question_mode: :less, present_answer: params[:more]}
 end
 
 get '/less' do
-  erb :top, :locals => {question_mode: :less, present_answer: params[:enough]}
+  update_menu_sym_pair if session[:core] != nil
+  receive_answer(params[:more]) if params[:more] != nil
+  go_next if session[:core].to_go_result? == false
+  update_menu_sym_pair
+  erb :top, :locals => {question_mode: :less, present_answer: params[:more]}
 end
 
-get '/enough' do
-  receive_answer(params[:less])
-  go_next
-  erb :top, :locals => {question_mode: :enough, present_answer: params[:less]}
+get '/more' do
+  update_menu_sym_pair if session[:core] != nil
+  receive_answer(params[:less]) if params[:less] != nil
+  go_next #if session[:core].to_go_result? == false
+  update_menu_sym_pair
+  if session[:core].answers.count < 2
+    delete_selected_menu(params[:less]) if params[:less] != nil
+  end
+  erb :top, :locals => {question_mode: :more, present_answer: params[:less]}
 end
 
 get '/result' do
-  receive_answer(params[:enough])
+  update_menu_sym_pair if session[:core] != nil
+  receive_answer(params[:more]) if params[:more] != nil
   go_next
-
+  continue_question
   erb :top, :locals => {
     question_mode: :result, 
-    present_answer: params[:enough], 
+    present_answer: params[:more], 
     built_result: build_result,
-    params: params}
+    params: params,
+    core: session[:core]}
 end
 
 after do
