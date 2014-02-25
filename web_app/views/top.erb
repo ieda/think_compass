@@ -15,13 +15,19 @@
 <body>
   <h1>Think Compass</h1>
     <!-- <%=question_mode.to_s%> -->
+    <p>何に迷っているか確かめよう！</p>
+    <p>
+      <form action="/" method="get">
+        <input type="submit" value="はじめから">
+      </form>
+    </p>
     <% case question_mode 
        when :less, :more %>
       <!-- <%=present_answer%> -->
       <%
         case question_mode
-          when :less; question_str = "どれが一番不足していますか？"; action_target = "more"
-          when :more; question_str = "どれが一番足りていますか？"; action_target = "result"
+          when :less; question_str = "どれが一番不足してますか？"; action_target = "more"
+          when :more; question_str = "どれが一番足りてますか？"; action_target = "result"
         end
         radios = []
         @menu_sym_name_pair.each do |sym, name|
@@ -39,20 +45,12 @@
           <input type="submit" value="回答">
         </form>
     <% when :result %>
-      <%
-        action_target = "less"
-      %>
+      <% action_target = "less"%>
       <h2>結果</h2>
-      　<p>
-          <%= built_result %>
-        <p>
+      　<h3><%= built_result %></h3>
         <% if core.question != nil %>
           <form action="<%=action_target%>" method="get">
             <input type="submit" value="継続">
-          </form>
-        <% else %>
-          <form action="/" method="get">
-            <input type="submit" value="はじめから">
           </form>
         <% end %>
     <% end %>

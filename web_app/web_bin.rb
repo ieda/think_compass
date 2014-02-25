@@ -61,7 +61,7 @@ def build_result
   else
     result += "#{less_base_name} 特に #{less_name}"
   end
-  result += " を補ってみてはどうでしょうか？\n"
+  result += " を補ってみてはどうですか？\n"
 
   # if (session[:core].received_answers.key?(:enough_element) && session[:core].received_answers.key?(:less_element))
   #   result += "#{session[:core].received_answers[:enough_element]} を使って #{session[:core].received_answers[:less_element]} を補ってみてはどうでしょうか？\n"
