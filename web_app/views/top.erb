@@ -29,17 +29,17 @@
           when :less; question_str = "どれが一番不足してますか？"; action_target = "more"
           when :more; question_str = "どれが一番足りてますか？"; action_target = "result"
         end
-        radios = []
+        buttons = []
         @menu_sym_name_pair.each do |sym, name|
-          radios << "<input type=\"radio\" name=\"#{question_mode.to_s}\" value=\"#{sym}\">#{name}"
+          buttons << %Q[<button name="#{question_mode.to_s}" value="#{sym}">#{name}</button>]
         end
-        radios[0][radios[0].index(">") - 1] += "checked=\"checked\""
+        buttons[0][buttons[0].index(">") - 1] += " autofocus"
       %>
       <h2><%=question_str%></h2>
         <form action="<%=action_target%>" method="get">
           <p>
-            <% radios.each do |r| %>
-              <%= r %>
+            <% buttons.each do |b| %>
+              <%= b %>
             <% end%>
           </p>
           <input type="submit" value="回答">
